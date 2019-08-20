@@ -4,7 +4,7 @@ import re
 import json
 from datetime import datetime
 import boto3
-pdf = '/Users/dryanmiller/Desktop/Administrative Consultant.pdf'
+pdf = '/Users/dryanmiller/Desktop/Rehabilitation Counselor.pdf'
 
 dynamodb = boto3.resource(‘dynamodb’)
 table = dynamodb.Table('JobSpecs')
@@ -48,7 +48,7 @@ class Iowa():
 
 
     def get_ID(self):
-        ID = re.search('[0-9][/0-9]*', self.text).group(0).strip()
+        ID = re.search('class code:\s*([0-9][/0-9]*)', self.text).group(1).strip()
         return ID
 
 
@@ -71,12 +71,12 @@ class Iowa():
                 Competencies = Competencies_string.group(1)
                 Competencies = re.sub('.\..\.', '', Competencies).strip()
                 Competencies_list = Competencies.split('.')
-                Competencies = list(filter(None, Competencies_list))
+                Competencies_list = list(filter(None, Competencies_list))
         else:
                 Competencies = Competencies_string.group(1)
                 Competencies = re.sub('.\..\.', '', Competencies).strip()
                 Competencies_list = Competencies.split('.')
-                Competencies = list(filter(None, Competencies_list))
+                Competencies_list = list(filter(None, Competencies_list))
         return Competencies_list
         
 
@@ -91,9 +91,8 @@ class Iowa():
 
 
     def get_EffectiveDate(self):
-        EffectiveDate_string = re.search('effective date(.*)([0-9][0-9]/[0-9]+)', self.text)
-        EffectiveDate = EffectiveDate_string.group(2).strip()
-        #EffectiveDate = datetime.strptime(EffectiveDate, '%m/%y')
+        EffectiveDate_string = re.search('effective date: *([0-9]+/[0-9]+)', self.text)
+        EffectiveDate = EffectiveDate_string.group(1).strip()
         return EffectiveDate
 
 jobSpec = Iowa(pdf)
