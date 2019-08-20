@@ -2,15 +2,20 @@
 import PyPDF2
 import re
 import json
+from datetime import datetime
+import boto3
+pdf = '/Users/dryanmiller/Desktop/Administrative Consultant.pdf'
 
-pdf = '/Users/dryanmiller/Desktop/Account Consultant.pdf'
+dynamodb = boto3.resource(‘dynamodb’)
+table = dynamodb.Table('JobSpecs')
+response = s3.get_object(Bucket=bucket, Key=key)
 
 class Iowa():
-    state = 'Iowa'
     
 
     def __init__(self, file_path):
         self.filename = self.get_FileName(file_path)
+        self.state = 'Iowa'
         self.text = self.extract_text()
         self.id = self.get_ID()
         self.title = self.get_Title()
@@ -61,10 +66,19 @@ class Iowa():
 
     def get_Competencies(self):
         Competencies_string = re.search('competencies required(.*)education, experience', self.text)
-        Competencies = Competencies_string.group(1).strip()
-        Competencies_list = Competencies.split('.')
+        if Competencies_string == None:
+                Competencies_string = re.search('competencies required(.*)minimum qualification requirements', self.text)
+                Competencies = Competencies_string.group(1)
+                Competencies = re.sub('.\..\.', '', Competencies).strip()
+                Competencies_list = Competencies.split('.')
+                Competencies = list(filter(None, Competencies_list))
+        else:
+                Competencies = Competencies_string.group(1)
+                Competencies = re.sub('.\..\.', '', Competencies).strip()
+                Competencies_list = Competencies.split('.')
+                Competencies = list(filter(None, Competencies_list))
         return Competencies_list
-
+        
 
     def get_Education(self):
         Education_string = re.search('education, experience, and special requirements(.*)effective date', self.text)
@@ -79,12 +93,13 @@ class Iowa():
     def get_EffectiveDate(self):
         EffectiveDate_string = re.search('effective date(.*)([0-9][0-9]/[0-9]+)', self.text)
         EffectiveDate = EffectiveDate_string.group(2).strip()
+        #EffectiveDate = datetime.strptime(EffectiveDate, '%m/%y')
         return EffectiveDate
 
-test = Iowa(pdf)
+jobSpec = Iowa(pdf)
+jobSpec.competencies
+jobSpec.__dict__
 
-test.__dict__
-
-s = json.dumps(test.__dict__)
-
-type(s)
+s = json.dumps(jobSpec.__dict__)
+table.put_item(
+   Item= s)
